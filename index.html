@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Root Finding Algorithms Visualizer</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #27ae60;
+            --bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Layout */
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        header h1 { margin: 0; font-size: 1.5rem; }
+        header p { margin: 5px 0 0; font-size: 0.9rem; opacity: 0.8; }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar Controls */
+        .sidebar {
+            width: 320px;
+            background: white;
+            border-right: 1px solid #ddd;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-group {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: monospace;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+            flex: 1;
+        }
+
+        .btn-primary { background-color: var(--secondary); color: white; }
+        .btn-primary:hover { background-color: #2980b9; }
+        .btn-accent { background-color: var(--accent); color: white; }
+        .btn-success { background-color: var(--success); color: white; }
+        .btn-outline { background-color: transparent; border: 1px solid #ccc; color: #333; }
+        
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+
+        .range-wrap { margin-top: 10px; }
+        
+        /* Main Visualization Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .canvas-container {
+            flex: 2;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            min-height: 300px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Results Panel */
+        .results-panel {
+            flex: 1;
+            margin-top: 20px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            overflow-y: auto;
+            padding: 10px;
+            max-height: 250px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        th { background-color: #f8f9fa; position: sticky; top: 0; }
+        .row-highlight { background-color: #e8f6f3; }
+
+        /* Documentation Modal/Section */
+        .info-section {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+
+        /* Helpers */
+        .hidden { display: none; }
+        .error-msg { color: var(--accent); font-size: 0.85rem; margin-top: 5px; }
+        .legend {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.9);
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .legend-item { display: flex; align-items: center; margin-bottom: 4px; }
+        .color-box { width: 12px; height: 12px; margin-right: 5px; display: inline-block; }
+
+        /* --- RESPONSIVE BREAKPOINTS --- */
+        /* Tablet and Mobile (< 900px) */
+        @media (max-width: 900px) {
+            body {
+                height: auto; /* Allow body to grow */
+            }
+            .container {
+                flex-direction: column; /* Stack vertically */
+                overflow: visible; /* Let the page scroll naturally */
+                height: auto;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+                max-height: none;
+                overflow: visible;
+            }
+            .main-content {
+                overflow: visible;
+                height: auto;
+                padding: 15px;
+            }
+            .canvas-container {
+                height: 400px; /* Fixed height for canvas on mobile to ensure usability */
+                flex: none; /* Don't grow/shrink */
+            }
+            .results-panel {
+                max-height: 400px;
+            }
+        }
+
+        /* Small Mobile (< 480px) */
+        @media (max-width: 480px) {
+            header h1 { font-size: 1.2rem; }
+            header p { font-size: 0.8rem; }
+            
+            .canvas-container {
+                height: 300px;
+            }
+            
+            .btn-group {
+                gap: 5px;
+            }
+            
+            button {
+                padding: 8px 10px;
+                font-size: 0.85rem;
+            }
+
+            .legend {
+                font-size: 0.7rem;
+                padding: 5px;
+                max-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Root Finding Algorithms Visualizer</h1>
+    <p style="font-size:1.5em">Visualize numerical analysis methods: Bisection, Newton-Raphson, Secant, and Regula Falsi.</p>
+</header>
+
+<div class="container">
+    <div class="sidebar">
+        <div class="control-group">
+            <label for="functionInput">Function f(x):</label>
+            <input type="text" id="functionInput" value="x^3 - x - 2" placeholder="e.g. x^2 - 4">
+            <div id="parseError" class="error-msg"></div>
+            <small style="color:#7f8c8d">Supported: +, -, *, /, ^, sin, cos, exp, log, sqrt</small>
+        </div>
+
+        <div class="control-group">
+            <label for="algoSelect">Algorithm:</label>
+            <select id="algoSelect">
+                <option value="bisection">Bisection Method</option>
+                <option value="newton">Newton-Raphson Method</option>
+                <option value="secant">Secant Method</option>
+                <option value="regula">Regula Falsi (False Position)</option>
+            </select>
+        </div>
+
+        <div class="control-group" id="inputGroupA">
+            <label for="paramA">Interval Start (a):</label>
+            <input type="number" id="paramA" value="1" step="0.1">
+        </div>
+        <div class="control-group" id="inputGroupB">
+            <label for="paramB">Interval End (b) / Second Guess:</label>
+            <input type="number" id="paramB" value="2" step="0.1">
+        </div>
+
+        <div class="control-group">
+            <label>Convergence Criteria:</label>
+            <div style="display:flex; gap:5px;">
+                <input type="number" id="tolerance" placeholder="Tol" value="0.001" step="0.0001" title="Tolerance">
+                <input type="number" id="maxIter" placeholder="Max Iter" value="50" title="Max Iterations">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label>Controls:</label>
+            <div class="btn-group">
+                <button class="btn-success" id="btnInitialize">Set/Reset</button>
+            </div>
+            <div class="btn-group" style="margin-top:10px">
+                <button class="btn-primary" id="btnStep" disabled>Step</button>
+                <button class="btn-primary" id="btnPlay" disabled>Play</button>
+                <button class="btn-accent" id="btnPause" disabled>Pause</button>
+            </div>
+            <div class="range-wrap">
+                <label for="speedRange" style="font-weight:normal; font-size:0.8rem">Animation Speed</label>
+                <input type="range" id="speedRange" min="100" max="2000" value="1000" style="width:100%">
+            </div>
+        </div>
+
+        <div class="info-section">
+            <strong>About:</strong> This tool helps visualize how root-finding algorithms converge. 
+            <a href="#docs" onclick="document.getElementById('docModal').style.display='block'">Read Documentation</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="canvas-container" id="canvasContainer">
+            <canvas id="mainCanvas"></canvas>
+            <div class="legend">
+                <div class="legend-item"><span class="color-box" style="background:blue"></span>f(x)</div>
+                <div class="legend-item"><span class="color-box" style="background:red"></span>Root Est.</div>
+                <div class="legend-item"><span class="color-box" style="background:rgba(0,255,0,0.2); border:1px solid green"></span>Interval</div>
+            </div>
+        </div>
+
+        <div class="results-panel">
+            <div id="finalResult" style="margin-top:10px; font-weight:bold; color:var(--dark);"></div>
+            <h3>Iteration Log</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Iter</th>
+                        <th>x (Est)</th>
+                        <th>f(x)</th>
+                        <th>Error (Est)</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody id="logBody">
+                    <tr><td colspan="5">Initialize an algorithm to start.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="docModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+    <div style="background:white; width:80%; max-width:800px; margin:50px auto; padding:30px; border-radius:8px; max-height:80vh; overflow-y:auto;">
+        <div style="display:flex; justify-content:space-between;">
+            <h2>Documentation & Tutorials</h2>
+            <button onclick="document.getElementById('docModal').style.display='none'" style="flex:none; width:auto;height:3.5em">Close</button>
+        </div>
+        <hr>
+        <h3>Theory</h3>
+        <p><strong>Root finding</strong> is the process of finding a value <em>x</em> such that <em>f(x) = 0</em>. This tool demonstrates four common iterative methods.</p>
+        
+        <h4>1. Bisection Method</h4>
+        <p>Requires an interval [a, b] where f(a) and f(b) have opposite signs (bracketing the root). It repeatedly cuts the interval in half.</p>
+        <ul>
+            <li><strong>Pros:</strong> Guaranteed to converge if signs differ.</li>
+            <li><strong>Cons:</strong> Slow convergence (linear).</li>
+        </ul>
+
+        <h4>2. Newton-Raphson Method</h4>
+        <p>Uses the derivative f'(x) to estimate the root. Starts with a single guess x<sub>0</sub>.</p>
+        <p><em>Formula:</em> x<sub>n+1</sub> = x<sub>n</sub> - f(x<sub>n</sub>) / f'(x<sub>n</sub>)</p>
+        <ul>
+            <li><strong>Pros:</strong> Very fast convergence (quadratic) near the root.</li>
+            <li><strong>Cons:</strong> Can diverge if f'(x) is near zero or initial guess is far off.</li>
+        </ul>
+
+        <h4>3. Secant Method</h4>
+        <p>Approximates the derivative using a secant line between two points. Does not require calculating the analytic derivative.</p>
+        
+        <h4>4. Regula Falsi (False Position)</h4>
+        <p>Similar to Bisection but draws a line between f(a) and f(b) to find the new point, rather than the midpoint. Often faster than bisection but can get stuck on one side.</p>
+
+        <h3>How to Use</h3>
+        <ol>
+            <li>Input a function (use JS math syntax like <code>Math.sin(x)</code> or shorthand <code>sin(x)</code>, <code>x^2</code>).</li>
+            <li>Select an algorithm.</li>
+            <li>Set initial parameters (guesses) and tolerance.</li>
+            <li>Click <strong>Set/Reset</strong> to initialize the graph.</li>
+            <li>Use <strong>Step</strong> to move one iteration at a time, or <strong>Play</strong> to animate.</li>
+        </ol>
+    </div>
+</div>
+
+<script>
+/**
+ * Root Finding Visualizer Logic
+ * Handles parsing, math logic, canvas rendering, and algorithm iteration.
+ */
+
+// --- 1. Math & Parsing Utilities ---
+
+const MathUtils = {
+    // Safe-ish evaluator for user input
+    parseFunction: (str) => {
+        try {
+            // Replace user-friendly syntax with JS Math syntax
+            let formatted = str.toLowerCase();
+            formatted = formatted.replace(/\^/g, '**');
+            // Regex to put 'Math.' in front of known functions if not already present
+            const mathFuncs = ['sin', 'cos', 'tan', 'exp', 'log', 'sqrt', 'abs', 'pow', 'pi', 'e'];
+            mathFuncs.forEach(func => {
+                const regex = new RegExp(`\\b${func}\\b`, 'g');
+                formatted = formatted.replace(regex, `Math.${func}`);
+            });
+            
+            // Create function
+            const f = new Function('x', `return ${formatted};`);
+            
+            // Test it
+            const test = f(1);
+            if (isNaN(test) && test !== undefined) throw new Error("Result is NaN");
+            
+            document.getElementById('parseError').textContent = "";
+            return f;
+        } catch (e) {
+            document.getElementById('parseError').textContent = "Invalid function syntax.";
+            return null;
+        }
+    },
+
+    // Numerical Derivative for Newton's method
+    derivative: (f, x) => {
+        const h = 0.000001;
+        return (f(x + h) - f(x)) / h;
+    }
+};
+
+// --- 2. Visualization Engine (Canvas) ---
+
+class Visualizer {
+    constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.width = this.canvas.width;
+        this.height = this.canvas.height;
+        
+        // Viewport (Math coordinates)
+        this.xMin = -10;
+        this.xMax = 10;
+        this.yMin = -10;
+        this.yMax = 10;
+        
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+    }
+
+    resize() {
+        // Handle High DPI displays
+        const parent = this.canvas.parentElement;
+        this.canvas.width = parent.clientWidth;
+        this.canvas.height = parent.clientHeight; // Fixed height in CSS usually
+        this.width = this.canvas.width;
+        this.height = this.canvas.height;
+        this.drawBase();
+    }
+
+    // Coordinate Transforms
+    mapX(x) {
+        return ((x - this.xMin) / (this.xMax - this.xMin)) * this.width;
+    }
+
+    mapY(y) {
+        return this.height - ((y - this.yMin) / (this.yMax - this.yMin)) * this.height;
+    }
+
+    // Draw grid and axes
+    drawBase() {
+        this.ctx.clearRect(0, 0, this.width, this.height);
+        
+        this.ctx.strokeStyle = '#eee';
+        this.ctx.lineWidth = 1;
+
+        // Grid
+        this.ctx.beginPath();
+        // Calc step size
+        const xStep = (this.xMax - this.xMin) / 10;
+        const yStep = (this.yMax - this.yMin) / 10;
+
+        for (let x = this.xMin; x <= this.xMax; x += xStep) {
+            const px = this.mapX(x);
+            this.ctx.moveTo(px, 0);
+            this.ctx.lineTo(px, this.height);
+        }
+        for (let y = this.yMin; y <= this.yMax; y += yStep) {
+            const py = this.mapY(y);
+            this.ctx.moveTo(0, py);
+            this.ctx.lineTo(this.width, py);
+        }
+        this.ctx.stroke();
+
+        // Axes
+        this.ctx.strokeStyle = '#333';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        // X Axis
+        const y0 = this.mapY(0);
+        this.ctx.moveTo(0, y0);
+        this.ctx.lineTo(this.width, y0);
+        // Y Axis
+        const x0 = this.mapX(0);
+        this.ctx.moveTo(x0, 0);
+        this.ctx.lineTo(x0, this.height);
+        this.ctx.stroke();
+    }
+
+    drawFunction(f) {
+        if (!f) return;
+        this.ctx.strokeStyle = 'blue';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        
+        let first = true;
+        for (let px = 0; px <= this.width; px++) {
+            // Convert pixel X to math X
+            const x = this.xMin + (px / this.width) * (this.xMax - this.xMin);
+            try {
+                const y = f(x);
+                const py = this.mapY(y);
+                
+                // Avoid drawing lines across infinity/asymptotes roughly
+                if (Math.abs(y) < (this.yMax - this.yMin) * 2) { 
+                    if (first) { this.ctx.moveTo(px, py); first = false; }
+                    else { this.ctx.lineTo(px, py); }
+                } else {
+                    first = true; // Lift pen
+                }
+            } catch(e) { first = true; }
+        }
+        this.ctx.stroke();
+    }
+
+    // Helpers for algorithms
+    drawPoint(x, color='red', radius=4) {
+        const px = this.mapX(x);
+        const py = this.mapY(0); // Roots are on Y=0
+        
+        this.ctx.fillStyle = color;
+        this.ctx.beginPath();
+        this.ctx.arc(px, py, radius, 0, Math.PI*2);
+        this.ctx.fill();
+    }
+
+    drawLine(x1, y1, x2, y2, color='green', dash=[]) {
+        this.ctx.strokeStyle = color;
+        this.ctx.setLineDash(dash);
+        this.ctx.lineWidth = 1.5;
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.mapX(x1), this.mapY(y1));
+        this.ctx.lineTo(this.mapX(x2), this.mapY(y2));
+        this.ctx.stroke();
+        this.ctx.setLineDash([]);
+    }
+
+    drawRegion(a, b, color='rgba(0, 255, 0, 0.1)') {
+        const x1 = this.mapX(a);
+        const x2 = this.mapX(b);
+        const w = x2 - x1;
+        
+        this.ctx.fillStyle = color;
+        this.ctx.fillRect(x1, 0, w, this.height);
+        
+        // Border lines
+        this.ctx.strokeStyle = 'green';
+        this.ctx.beginPath();
+        this.ctx.moveTo(x1, 0); this.ctx.lineTo(x1, this.height);
+        this.ctx.moveTo(x2, 0); this.ctx.lineTo(x2, this.height);
+        this.ctx.stroke();
+    }
+}
+
+// --- 3. Algorithms ---
+
+class Algorithm {
+    constructor(f, params, tolerance, maxIter) {
+        this.f = f;
+        this.tol = tolerance;
+        this.maxIter = maxIter;
+        this.iter = 0;
+        this.converged = false;
+        this.log = [];
+        this.params = params; // Generic storage for a, b, x0, etc.
+    }
+    
+    // Returns object: { x: number, error: number, draw: callback(visualizer) }
+    next() { return null; }
+}
+
+class Bisection extends Algorithm {
+    constructor(f, a, b, tol, maxIter) {
+        super(f, {a, b}, tol, maxIter);
+        this.c = a;
+        // Check bracketing
+        if (f(a) * f(b) >= 0) {
+            alert("Bisection Error: f(a) and f(b) must have opposite signs.");
+            this.converged = true; // abort
+        }
+    }
+
+    next() {
+        if (this.converged || this.iter >= this.maxIter) return null;
+
+        let { a, b } = this.params;
+        let c = (a + b) / 2;
+        let fc = this.f(c);
+        let err = Math.abs(b - a);
+
+        // Visualization logic for this step
+        const drawStep = (viz) => {
+            viz.drawRegion(a, b);
+            viz.drawPoint(c, 'red');
+        };
+
+        // Logic for next step
+        if (Math.abs(fc) < 1e-15 || err < this.tol) {
+            this.converged = true;
+        } else {
+            if (this.f(a) * fc < 0) {
+                this.params.b = c; // Root in [a, c]
+            } else {
+                this.params.a = c; // Root in [c, b]
+            }
+        }
+
+        this.iter++;
+        return {
+            x: c,
+            fx: fc,
+            error: err,
+            draw: drawStep,
+            note: `Interval [${a.toFixed(3)}, ${b.toFixed(3)}]`
+        };
+    }
+}
+
+class Newton extends Algorithm {
+    constructor(f, x0, ignored, tol, maxIter) {
+        super(f, {x: x0}, tol, maxIter);
+    }
+
+    next() {
+        if (this.converged || this.iter >= this.maxIter) return null;
+
+        let x = this.params.x;
+        let fx = this.f(x);
+        let dfx = MathUtils.derivative(this.f, x);
+
+        if (Math.abs(dfx) < 1e-10) {
+            alert("Derivative near zero. Algorithm fails.");
+            this.converged = true;
+            return null;
+        }
+
+        let xNew = x - (fx / dfx);
+        let err = Math.abs(xNew - x);
+
+        const drawStep = (viz) => {
+            // Draw tangent line
+            // Line passes through (x, fx) and (xNew, 0)
+            viz.drawPoint(x, 'orange', 3);
+            viz.drawLine(x, fx, xNew, 0, 'purple', [5, 5]);
+            viz.drawPoint(xNew, 'red');
+        };
+
+        if (err < this.tol) this.converged = true;
+        
+        this.params.x = xNew;
+        this.iter++;
+
+        return {
+            x: xNew,
+            fx: this.f(xNew),
+            error: err,
+            draw: drawStep,
+            note: `f'(x) ≈ ${dfx.toFixed(3)}`
+        };
+    }
+}
+
+class Secant extends Algorithm {
+    constructor(f, x0, x1, tol, maxIter) {
+        super(f, {x0, x1}, tol, maxIter);
+    }
+
+    next() {
+        if (this.converged || this.iter >= this.maxIter) return null;
+
+        let {x0, x1} = this.params;
+        let fx0 = this.f(x0);
+        let fx1 = this.f(x1);
+
+        if (Math.abs(fx1 - fx0) < 1e-15) {
+            alert("Division by zero in Secant method.");
+            this.converged = true;
+            return null;
+        }
+
+        let xNew = x1 - fx1 * ((x1 - x0) / (fx1 - fx0));
+        let err = Math.abs(xNew - x1);
+
+        const drawStep = (viz) => {
+            viz.drawPoint(x0, 'gray', 3);
+            viz.drawPoint(x1, 'orange', 3);
+            // Secant line passes through (x0, fx0) and (x1, fx1) and hits (xNew, 0)
+            viz.drawLine(x0, fx0, x1, fx1, 'orange'); 
+            // Extend to axis visually
+            viz.drawLine(x1, fx1, xNew, 0, 'orange', [2, 2]);
+            viz.drawPoint(xNew, 'red');
+        };
+
+        if (err < this.tol) this.converged = true;
+
+        this.params.x0 = x1;
+        this.params.x1 = xNew;
+        this.iter++;
+
+        return {
+            x: xNew,
+            fx: this.f(xNew),
+            error: err,
+            draw: drawStep,
+            note: `Secant slope`
+        };
+    }
+}
+
+class RegulaFalsi extends Algorithm {
+    constructor(f, a, b, tol, maxIter) {
+        super(f, {a, b}, tol, maxIter);
+        if (f(a) * f(b) >= 0) {
+            alert("Regula Falsi Error: f(a) and f(b) must bracket root.");
+            this.converged = true;
+        }
+    }
+
+    next() {
+        if (this.converged || this.iter >= this.maxIter) return null;
+
+        let {a, b} = this.params;
+        let fa = this.f(a);
+        let fb = this.f(b);
+
+        // Formula for false position
+        let c = (a * fb - b * fa) / (fb - fa);
+        let fc = this.f(c);
+        let err = Math.abs(c - (this.lastC || a)); // Error based on change in root est
+
+        const drawStep = (viz) => {
+            viz.drawRegion(a, b, 'rgba(0,0,255,0.05)');
+            viz.drawPoint(a, 'gray', 3);
+            viz.drawPoint(b, 'gray', 3);
+            viz.drawLine(a, fa, b, fb, 'purple'); // Chord
+            viz.drawPoint(c, 'red');
+        };
+
+        if (Math.abs(fc) < this.tol || (this.lastC && err < this.tol)) this.converged = true;
+
+        if (fa * fc < 0) {
+            this.params.b = c;
+        } else {
+            this.params.a = c;
+        }
+        
+        this.lastC = c;
+        this.iter++;
+
+        return {
+            x: c,
+            fx: fc,
+            error: err,
+            draw: drawStep,
+            note: `Chord intercept`
+        };
+    }
+}
+
+// --- 4. Controller (Wiring UI to Logic) ---
+
+const App = {
+    viz: null,
+    currentAlgo: null,
+    func: null,
+    animationId: null,
+    
+    init: () => {
+        App.viz = new Visualizer('mainCanvas');
+        
+        // Listeners
+        document.getElementById('algoSelect').addEventListener('change', App.updateInputs);
+        document.getElementById('btnInitialize').addEventListener('click', App.reset);
+        document.getElementById('btnStep').addEventListener('click', App.step);
+        document.getElementById('btnPlay').addEventListener('click', App.play);
+        document.getElementById('btnPause').addEventListener('click', App.pause);
+        
+        // Initial setup
+        App.updateInputs();
+    },
+
+    updateInputs: () => {
+        const algo = document.getElementById('algoSelect').value;
+        const groupA = document.getElementById('inputGroupA');
+        const groupB = document.getElementById('inputGroupB');
+        const labelA = document.querySelector('label[for="paramA"]');
+        const labelB = document.querySelector('label[for="paramB"]');
+
+        if (algo === 'newton') {
+            labelA.textContent = "Initial Guess (x0):";
+            groupB.style.display = 'none';
+        } else if (algo === 'secant') {
+            labelA.textContent = "First Point (x0):";
+            labelB.textContent = "Second Point (x1):";
+            groupB.style.display = 'block';
+        } else {
+            // Bracketing methods
+            labelA.textContent = "Interval Start (a):";
+            labelB.textContent = "Interval End (b):";
+            groupB.style.display = 'block';
+        }
+    },
+
+    reset: () => {
+        App.pause();
+        // Clear log
+        document.getElementById('logBody').innerHTML = '';
+        document.getElementById('finalResult').textContent = '';
+
+        // Get Input
+        const funcStr = document.getElementById('functionInput').value;
+        App.func = MathUtils.parseFunction(funcStr);
+        if (!App.func) return;
+
+        // Get Params
+        const algoType = document.getElementById('algoSelect').value;
+        const pA = parseFloat(document.getElementById('paramA').value);
+        const pB = parseFloat(document.getElementById('paramB').value);
+        const tol = parseFloat(document.getElementById('tolerance').value);
+        const maxIter = parseInt(document.getElementById('maxIter').value);
+
+        // Auto-scale view based on inputs
+        const center = (algoType === 'newton') ? pA : (pA + pB)/2;
+        const range = (algoType === 'newton') ? 5 : Math.abs(pB - pA) * 2 || 10;
+        App.viz.xMin = center - range;
+        App.viz.xMax = center + range;
+        // Simple heuristic for Y, user can't zoom in this simple version
+        App.viz.yMin = -10; App.viz.yMax = 10; 
+        
+        App.viz.drawBase();
+        App.viz.drawFunction(App.func);
+
+        // Init Algo
+        switch(algoType) {
+            case 'bisection': App.currentAlgo = new Bisection(App.func, pA, pB, tol, maxIter); break;
+            case 'newton': App.currentAlgo = new Newton(App.func, pA, null, tol, maxIter); break;
+            case 'secant': App.currentAlgo = new Secant(App.func, pA, pB, tol, maxIter); break;
+            case 'regula': App.currentAlgo = new RegulaFalsi(App.func, pA, pB, tol, maxIter); break;
+        }
+
+        // Draw initial state (guesses)
+        if (algoType !== 'newton') {
+            App.viz.drawPoint(pA, 'gray');
+            App.viz.drawPoint(pB, 'gray');
+        } else {
+            App.viz.drawPoint(pA, 'gray');
+        }
+
+        // Enable buttons
+        document.getElementById('btnStep').disabled = false;
+        document.getElementById('btnPlay').disabled = false;
+        document.getElementById('btnPause').disabled = true;
+    },
+
+    step: () => {
+        if (!App.currentAlgo) return;
+
+        const result = App.currentAlgo.next();
+        
+        // Redraw base to clear previous transient lines (tangents etc)
+        App.viz.drawBase();
+        App.viz.drawFunction(App.func);
+
+        if (result) {
+            // Execute visualization specific to step
+            result.draw(App.viz);
+            App.logResult(result);
+        }
+
+        if (App.currentAlgo.converged) {
+            App.finish("Converged to root: " + (result ? result.x.toPrecision(7) : "Unknown"));
+        } else if (App.currentAlgo.iter >= App.currentAlgo.maxIter) {
+            App.finish("Max iterations reached.");
+        }
+    },
+
+    logResult: (res) => {
+        const tbody = document.getElementById('logBody');
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td style="font-size:1.2em;">${App.currentAlgo.iter}</td>
+            <td style="font-size:1.2em;">${res.x.toFixed(6)}</td>
+            <td style="font-size:1.2em;">${res.fx.toExponential(3)}</td>
+            <td style="font-size:1.em;">${res.error.toExponential(3)}</td>
+            <td style="font-size:1.2em; color:#666">${res.note}</td>
+        `;
+        tbody.prepend(row); // Newest top
+    },
+
+    play: () => {
+        if (!App.currentAlgo || App.currentAlgo.converged) return;
+        document.getElementById('btnPlay').disabled = true;
+        document.getElementById('btnStep').disabled = true;
+        document.getElementById('btnPause').disabled = false;
+
+        const speed = 2100 - document.getElementById('speedRange').value; // Invert logic
+        
+        App.animationId = setInterval(() => {
+            App.step();
+            if (App.currentAlgo.converged || App.currentAlgo.iter >= App.currentAlgo.maxIter) {
+                App.pause();
+            }
+        }, speed);
+    },
+
+    pause: () => {
+        clearInterval(App.animationId);
+        document.getElementById('btnPlay').disabled = false;
+        document.getElementById('btnStep').disabled = false;
+        document.getElementById('btnPause').disabled = true;
+    },
+
+    finish: (msg) => {
+        App.pause();
+        document.getElementById('finalResult').textContent = msg;
+        document.getElementById('btnPlay').disabled = true;
+        document.getElementById('btnStep').disabled = true;
+    }
+};
+
+// Start the app
+window.onload = App.init;
+
+</script>
+</body>
+</html>
