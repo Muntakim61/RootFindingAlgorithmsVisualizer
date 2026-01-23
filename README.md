@@ -46,9 +46,9 @@ Based on the project requirements specification:
 - The design should allow future extensibility for additional algorithms.
 
 ## Project Structure Overview
+ ├── index.html        # Complete application including HTML, CSS, and JavaScript
 
-├── index.html        # Complete application including HTML, CSS, and JavaScript
-├── RootFindingAlgorithmsVisualizer.pdf   # Project requirements and specification
+ ├── RootFindingAlgorithmsVisualizer.pdf   # Project requirements and specification
 
 
 The project is implemented as a single self-contained HTML file with embedded styles and scripts. No external libraries or build tools are required.
