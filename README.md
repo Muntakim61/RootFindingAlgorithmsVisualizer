@@ -1,4 +1,3 @@
-```markdown
 # Root Finding Algorithms Visualizer
 
 ## Project Description and Purpose
@@ -112,4 +111,3 @@ Potential enhancements inferred from the requirements include:
 ## License
 
 License information is not specified. A suitable open-source license can be added as needed.
-```
