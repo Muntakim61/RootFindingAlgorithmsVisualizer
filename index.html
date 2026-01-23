@@ -269,6 +269,7 @@
                 height: auto;
                 padding: 15px;
             }
+
             .canvas-container {
                 height: 400px;
                 flex: none;
@@ -306,8 +307,9 @@
                 padding: 5px;
                 max-width: 120px;
             }
-            .container{
-                width:90vw;
+
+            .container {
+                width: 90vw;
                 margin-left: auto;
                 margin-right: auto;
             }
@@ -456,7 +458,8 @@
             <h3>How to Use</h3>
             <ol>
                 <li>Input a function (use JS math syntax like <code>Math.sin(x)</code> or shorthand <code>sin(x)</code>,
-                    <code>x^2</code>).</li>
+                    <code>x^2</code>).
+                </li>
                 <li>Select an algorithm.</li>
                 <li>Set initial parameters (guesses) and tolerance.</li>
                 <li>Click <strong>Set/Reset</strong> to initialize the graph.</li>
@@ -466,11 +469,6 @@
     </div>
 
     <script>
-        /**
-         * Root Finding Visualizer Logic
-         * Handles parsing, math logic, canvas rendering, and algorithm iteration.
-         */
-
         const MathUtils = {
             parseFunction: (str) => {
                 try {
@@ -631,7 +629,7 @@
                 this.iter = 0;
                 this.converged = false;
                 this.log = [];
-                this.params = params; // Generic storage for a, b, x0, etc.
+                this.params = params;
             }
 
             // Returns object: { x: number, error: number, draw: callback(visualizer) }
@@ -966,6 +964,6 @@
 
         window.onload = App.init;
 
-    </script>F=
+    </script>
 
 </html>
